@@ -1,0 +1,77 @@
+services:
+  database:
+    image: postgres:14-alpine
+    environment: 
+        POSTGRES_PASSWORD: local_pass
+        POSTGRES_USER: local_user
+        POSTGRES_DB: local_db
+    ports:
+        - 5432:5432
+    volumes:
+        - db:/var/lib/postgresql/data
+    networks: 
+        - db
+  
+  mongo-express:
+    image: mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: renatogroffe
+      ME_CONFIG_BASICAUTH_PASSWORD: MongoExpress2019!
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 1
+      ME_CONFIG_MONGODB_AUTH_DATABASE: test
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: MongoDB2019!
+    links:
+      - mongo
+    networks:
+      - mongo-compose-network
+  
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: MongoDB2019!
+      MONGO_INITDB_DATABASE: test
+    ports:
+      - "27017:27017"
+    volumes:
+      - datamongo:/data/db
+    networks:
+      - mongo-compose-network
+
+  etl:
+    build: 
+      context: ./
+      args:
+        - KAGGLE_USERNAME=${KAGGLE_USERNAME}
+        - KAGGLE_KEY=${KAGGLE_KEY}
+        - KAGGLE_DATASET=${KAGGLE_DATASET}
+        - KAGGLE_OWNER=${KAGGLE_OWNER}
+    command: tail -f Part1.md
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PASSWORD: local_pass
+      DATABASE_USER: local_user
+      DATABASE_NAME: local_db
+      DATABASE_PORT: 5432
+    volumes:
+        - ./:/code/
+    networks: 
+        - db
+        - mongo-compose-network
+    depends_on: 
+        - database
+
+  # result:
+
+volumes:
+  db:
+  datamongo:
+
+networks: 
+  db:
+  mongo-compose-network:

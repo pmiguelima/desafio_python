@@ -1,0 +1,4 @@
+asyncio==3.4.3
+kaggle==1.6.17
+pandas==2.2.3
+pymongo==4.10.1
